@@ -3,6 +3,7 @@ package ru.example;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
@@ -19,12 +20,11 @@ public class Main {
             int cowsCount = 0;
             int bullsCount = 0;
 
-            List<Character> typedChars = typedWord.toCharArray();
             char[] wordChars = word.toCharArray();
-            for(int index = 0; index < typedChars.length; index ++){
-                if(index < wordChars.length && typedChars[index] == wordChars[index]){
+            for(int index = 0; index < typedWord.length(); index ++){
+                if(index < wordChars.length && typedWord.charAt(index) == wordChars[index]){
                     bullsCount ++;
-                    typedChars.
+                    typedWord.replace(index,);
                 }
             }
 
