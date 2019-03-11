@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Main {
@@ -25,7 +24,8 @@ public class Main {
         String typedWord = br.readLine();
         typedWordChars = new StringBuilder(typedWord);
         wordChars = new StringBuilder(word);
-        while (!typedWord.equals(word)) {
+        int tryCount = 0;
+        while (!typedWord.equals(word) && tryCount<10) {
             int bullsCount = calculateBulls();
             int cowsCount = calculateCows();
 
@@ -34,8 +34,14 @@ public class Main {
             typedWord = br.readLine();
             typedWordChars = new StringBuilder(typedWord);
             wordChars = new StringBuilder(word);
+            tryCount++;
         }
-        System.out.println("Congratulations! You win!");
+        if(tryCount == 10) {
+            System.out.println("You lose!");
+        }
+        else {
+            System.out.println("Congratulations! You win!");
+        }
     }
 
     public static int calculateBulls() {
