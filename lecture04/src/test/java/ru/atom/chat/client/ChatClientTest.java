@@ -46,7 +46,35 @@ public class ChatClientTest {
 
     @Test
     public void say() throws IOException {
+        Response response1 = ChatClient.login(MY_NAME_IN_CHAT);
+        System.out.println("[" + response1 + "]");
         Response response = ChatClient.say(MY_NAME_IN_CHAT, MY_MESSAGE_TO_CHAT);
+        System.out.println("[" + response + "]");
+        System.out.println(response.body().string());
+        Assert.assertEquals(200, response.code());
+    }
+
+    @Test
+    public void logout() throws IOException {
+        Response response1 = ChatClient.login(MY_NAME_IN_CHAT);
+        System.out.println("[" + response1 + "]");
+        Response response = ChatClient.logout(MY_NAME_IN_CHAT);
+        System.out.println("[" + response + "]");
+        System.out.println(response.body().string());
+        Assert.assertEquals(200, response.code());
+    }
+
+    @Test
+    public void deleteHistory() throws IOException {
+        Response response = ChatClient.deleteChatHistory();
+        System.out.println("[" + response + "]");
+        System.out.println(response.body().string());
+        Assert.assertEquals(200, response.code());
+    }
+
+    @Test
+    public void getCurrentDate() throws IOException {
+        Response response = ChatClient.getCurrentDate();
         System.out.println("[" + response + "]");
         System.out.println(response.body().string());
         Assert.assertEquals(200, response.code());
