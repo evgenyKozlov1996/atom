@@ -38,10 +38,13 @@ public class ChatClientTest {
 
     @Test
     public void viewOnline() throws IOException {
+        Response response1 = ChatClient.login(MY_NAME_IN_CHAT);
         Response response = ChatClient.viewOnline();
         System.out.println("[" + response + "]");
-        System.out.println(response.body().string());
-        Assert.assertEquals(200, response.code());
+        String responseBody = response.body().string();
+        System.out.println(responseBody);
+
+        Assert.assertTrue(response.code() == 200 && responseBody.equals(MY_NAME_IN_CHAT));
     }
 
     @Test
@@ -68,8 +71,9 @@ public class ChatClientTest {
     public void deleteHistory() throws IOException {
         Response response = ChatClient.deleteChatHistory();
         System.out.println("[" + response + "]");
-        System.out.println(response.body().string());
-        Assert.assertEquals(200, response.code());
+        String responseBody = response.body().string();
+        System.out.println(responseBody);
+        Assert.assertTrue(response.code() == 200 && responseBody.equals("Messages deleted successfully!"));
     }
 
     @Test
