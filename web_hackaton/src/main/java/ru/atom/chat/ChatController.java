@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,7 +73,8 @@ public class ChatController {
             method = RequestMethod.GET,
             produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity online() {
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);//TODO
+        String responseBody=String.join("\n", usersOnline.keySet().stream().sorted().collect(Collectors.toList()));
+        return ResponseEntity.ok(responseBody);
     }
 
     /**
@@ -82,7 +86,11 @@ public class ChatController {
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity logout(@RequestParam("name") String name) {
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);//TODO
+        if(usersOnline.containsKey(name)){
+            usersOnline.remove(name);
+            return ResponseEntity.ok("User " + name + " successfully logged out!");
+        }
+        return ResponseEntity.badRequest().body("User " + name + " does not exists!");
     }
 
 
@@ -95,6 +103,12 @@ public class ChatController {
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity say(@RequestParam("name") String name, @RequestParam("msg") String msg) {
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);//TODO
+        DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        if(usersOnline.containsKey(name)) {
+            messages.add("(" + name + ")" + "[" + df.format(new Date()) + "]: " + msg);
+            return ResponseEntity.ok("(" + name + ")" + "[" + df.format(new Date()) + "]: " + msg);
+        }
+
+        return ResponseEntity.badRequest().body("User " + name + "does not exists!");
     }
 }
