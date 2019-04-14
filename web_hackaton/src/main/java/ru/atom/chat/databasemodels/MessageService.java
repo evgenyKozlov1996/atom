@@ -8,7 +8,7 @@ import java.util.List;
 @Service
 public class MessageService implements IMessageService {
     @Autowired
-    private IdbMessageDao messageDao = new DbMessageDao();
+    private IdbMessageDao messageDao;
 
     @Override
     public List<DbMessage> getAllMessages() {

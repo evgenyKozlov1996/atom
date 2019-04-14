@@ -8,27 +8,27 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 
 @Entity
-@Table(name="messages")
+@Table(name = "messages")
 public class DbMessage {
     @Id
-    @Column(name="id")
+    @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name="username")
+    @Column(name = "username")
     private String username;
 
-    @Column(name="date")
+    @Column(name = "date")
     private String date;
 
-    @Column(name="message")
+    @Column(name = "message")
     private String message;
 
-    public int getId(){
+    public int getId() {
         return this.id;
     }
 
-    public void setId(int id){
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -36,23 +36,23 @@ public class DbMessage {
         return this.username;
     }
 
-    public void setName(String name){
-        this.username=name;
+    public void setName(String name) {
+        this.username = name;
     }
 
-    public String getDate(){
+    public String getDate() {
         return this.date;
     }
 
-    public void setDate(String date){
+    public void setDate(String date) {
         this.date = date;
     }
 
-    public String getMessage(){
+    public String getMessage() {
         return this.message;
     }
 
-    public void setMessage(String message){
+    public void setMessage(String message) {
         this.message = message;
     }
 }

@@ -15,11 +15,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import ru.atom.chat.databasemodels.DbMessage;
 import ru.atom.chat.databasemodels.IMessageService;
-import ru.atom.chat.databasemodels.MessageService;
 import ru.atom.chat.models.Message;
 import ru.atom.chat.models.User;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+import java.io.PrintWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -35,7 +40,7 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class ChatController {
     @Autowired
-    private IMessageService messageService = new MessageService();
+    private IMessageService messageService;
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
@@ -69,8 +74,7 @@ public class ChatController {
         path = "login",
         method = RequestMethod.POST,
         consumes = MediaType.APPLICATION_JSON_VALUE,
-        produces = MediaType.APPLICATION_JSON_VALUE
-    )
+        produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity login(@RequestBody User user) throws IOException {
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
