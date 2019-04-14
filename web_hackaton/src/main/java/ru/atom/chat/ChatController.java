@@ -1,36 +1,52 @@
 package ru.atom.chat;
 
-import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
-import ru.atom.chat.DatabaseModels.DBMessage;
+
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import ru.atom.chat.databasemodels.DbMessage;
+import ru.atom.chat.databasemodels.IMessageService;
 import ru.atom.chat.models.Message;
 import ru.atom.chat.models.User;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Queue;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:4200")
 public class ChatController {
+    @Autowired
+    private IMessageService messageService;
+
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
     private Map<String, String> usersOnline = new ConcurrentHashMap<>();
     private Queue<User> users = new ConcurrentLinkedQueue<>();
+
+    private User admin = new User("admin", "admin");
 
     private final String chatFilePath = "D:\\JavaTest\\ChatLog.txt";
 
@@ -58,7 +74,7 @@ public class ChatController {
         method = RequestMethod.POST,
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
-    )
+        )
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity login(@RequestBody User user) throws IOException {
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
@@ -86,21 +102,49 @@ public class ChatController {
                     objectStream.close();
                 }
 
-                fileStream.close();
-
-                //Save to DB
-                /*DBMessage dbMessage = new DBMessage();
+                DbMessage dbMessage = new DbMessage();
                 dbMessage.setName(user.username);
                 dbMessage.setMessage(" logged in!");
                 dbMessage.setDate(df.format(new Date()));
-                Session session = HibernateUtil.getSessionFactory().openSession();
-                session.beginTransaction();
-                session.save(dbMessage);
-                session.getTransaction().commit();
-                session.close();*/
+                messageService.addMessage(dbMessage);
+
+                fileStream.close();
 
                 return ResponseEntity.ok(user);
             }
+        }
+
+        if(admin.equals(user)){
+            File chatLogFile = new File(chatFilePath);
+            boolean fileCreated = chatLogFile.createNewFile();
+            FileOutputStream fileStream = new FileOutputStream(chatFilePath, true);
+            if (fileCreated) {
+                ObjectOutputStream objectStream = new ObjectOutputStream(fileStream);
+                Message message = new Message();
+                message.username = user.username;
+                message.message = " logged in!";
+                message.date = df.format(new Date());
+                objectStream.writeObject(message);
+                objectStream.close();
+            } else {
+                AppendingObjectOutputStream objectStream = new AppendingObjectOutputStream(fileStream);
+                Message message = new Message();
+                message.username = user.username;
+                message.message = " logged in!";
+                message.date = df.format(new Date());
+                objectStream.writeObject(message);
+                objectStream.close();
+            }
+
+            DbMessage dbMessage = new DbMessage();
+            dbMessage.setName(user.username);
+            dbMessage.setMessage(" logged in!");
+            dbMessage.setDate(df.format(new Date()));
+            messageService.addMessage(dbMessage);
+
+            fileStream.close();
+
+            return ResponseEntity.ok(user);
         }
 
         return ResponseEntity.badRequest().body(null);
@@ -175,18 +219,34 @@ public class ChatController {
             objectStream.close();
             fileStream.close();
 
-            //Save to DB
-            /*DBMessage dbMessage = new DBMessage();
+            DbMessage dbMessage = new DbMessage();
             dbMessage.setName(user.username);
             dbMessage.setMessage(" logged out!");
             dbMessage.setDate(df.format(new Date()));
-            Session session = HibernateUtil.getSessionFactory().openSession();
-            session.beginTransaction();
-            session.save(dbMessage);
-            session.getTransaction().commit();
-            session.close();*/
+            messageService.addMessage(dbMessage);
 
             return ResponseEntity.ok(user);
+        }
+
+        if(admin.equals(user)){
+            DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            File chatLogFile = new File(chatFilePath);
+            chatLogFile.createNewFile();
+            FileOutputStream fileStream = new FileOutputStream(chatFilePath, true);
+            AppendingObjectOutputStream objectStream = new AppendingObjectOutputStream(fileStream);
+            Message message = new Message();
+            message.username = user.username;
+            message.message = " logged out!";
+            message.date = df.format(new Date());
+            objectStream.writeObject(message);
+            objectStream.close();
+            fileStream.close();
+
+            DbMessage dbMessage = new DbMessage();
+            dbMessage.setName(user.username);
+            dbMessage.setMessage(" logged out!");
+            dbMessage.setDate(df.format(new Date()));
+            messageService.addMessage(dbMessage);
         }
 
         return ResponseEntity.badRequest().body(null);
@@ -213,20 +273,16 @@ public class ChatController {
             while (matcher.find()) {
                 message.message = message.message.replace(message.message.substring(matcher.start(), matcher.end()), "<a href=\"" + message.message.substring(matcher.start(), matcher.end()) + "\">" + message.message.substring(matcher.start(), matcher.end()) + "</a>");
             }*/
+
+            DbMessage dbMessage = new DbMessage();
+            dbMessage.setName(message.username);
+            dbMessage.setMessage(message.message);
+            dbMessage.setDate(message.date);
+            messageService.addMessage(dbMessage);
             oi.writeObject(message);
             oi.close();
             fi.close();
 
-            //Save to DB
-            /*DBMessage dbMessage = new DBMessage();
-            dbMessage.setName(message.username);
-            dbMessage.setDate(message.date);
-            dbMessage.setMessage((message.message));
-            Session session = HibernateUtil.getSessionFactory().openSession();
-            session.beginTransaction();
-            session.save(dbMessage);
-            session.getTransaction().commit();
-            session.close();*/
 
             return ResponseEntity.ok(message);
         }
