@@ -1,51 +1,80 @@
 package ru.atom.chat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mysql.cj.x.protobuf.MysqlxResultset;
 import okhttp3.Response;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import ru.atom.chat.models.User;
 
-import java.io.IOException;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
-@Ignore
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+@DataJpaTest
 public class ChatClientTest {
+
+    private MockMvc mockMvc;
+
+    @Before
+    public void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(new ChatController())
+            .build();
+    }
+
     private static final Logger log = LoggerFactory.getLogger(ChatClientTest.class);
 
-    private static String MY_NAME_IN_CHAT = "I_AM_STUPID";
-    private static String MY_MESSAGE_TO_CHAT = "KILL_ME_SOMEONE";
+    @Test
+    public void register() throws Exception {
+        mockMvc.perform(post("/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(asJsonString(new User("user1", "user1")))
+            .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
+
+    @Ignore
+    @Test
+    public void login() throws Exception {
+        mockMvc.perform(post("/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(asJsonString(new User("user1", "user1")))
+            .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+
+        mockMvc.perform(post("/login")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(asJsonString(new User("user1", "user1")))
+            .accept(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk());
+    }
 
     @Test
-    public void login() throws IOException {
-        Response response = ChatClient.login(MY_NAME_IN_CHAT);
-        log.info("[" + response + "]");
-        String body = response.body().string();
-        log.info(body);
-        Assert.assertTrue(response.code() == 200 || body.equals("Already logged in:("));
+    public void viewOnline() throws Exception {
+        mockMvc.perform(get("/online")).andExpect(status().isOk());
     }
 
-    @Test
-    public void viewChat() throws IOException {
-        Response response = ChatClient.viewChat();
-        log.info("[" + response + "]");
-        log.info(response.body().string());
-        Assert.assertEquals(200, response.code());
-    }
-
-    @Test//TODO FIX
-    public void viewOnline() throws IOException {
-        Response response = ChatClient.viewOnline();
-        log.info("[" + response + "]");
-        log.info(response.body().toString());
-        Assert.assertEquals(200, response.code());
-    }
-
-    @Test//TODO FIX
-    public void say() throws IOException {
-        Response response = ChatClient.say(MY_NAME_IN_CHAT, MY_MESSAGE_TO_CHAT);
-        log.info("[" + response + "]");
-        log.info(response.body().string());
-        Assert.assertEquals(200, response.code());
+    public static String asJsonString(final Object obj) {
+        try {
+            return new ObjectMapper().writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

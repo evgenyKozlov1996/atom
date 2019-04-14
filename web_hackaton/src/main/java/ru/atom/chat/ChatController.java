@@ -15,15 +15,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import ru.atom.chat.databasemodels.DbMessage;
 import ru.atom.chat.databasemodels.IMessageService;
+import ru.atom.chat.databasemodels.MessageService;
 import ru.atom.chat.models.Message;
 import ru.atom.chat.models.User;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -39,7 +35,7 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "http://localhost:4200")
 public class ChatController {
     @Autowired
-    private IMessageService messageService;
+    private IMessageService messageService = new MessageService();
 
     private static final Logger log = LoggerFactory.getLogger(ChatController.class);
 
@@ -74,7 +70,7 @@ public class ChatController {
         method = RequestMethod.POST,
         consumes = MediaType.APPLICATION_JSON_VALUE,
         produces = MediaType.APPLICATION_JSON_VALUE
-        )
+    )
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity login(@RequestBody User user) throws IOException {
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
@@ -114,7 +110,7 @@ public class ChatController {
             }
         }
 
-        if(admin.equals(user)){
+        if (admin.equals(user)) {
             File chatLogFile = new File(chatFilePath);
             boolean fileCreated = chatLogFile.createNewFile();
             FileOutputStream fileStream = new FileOutputStream(chatFilePath, true);
@@ -228,7 +224,7 @@ public class ChatController {
             return ResponseEntity.ok(user);
         }
 
-        if(admin.equals(user)){
+        if (admin.equals(user)) {
             DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
             File chatLogFile = new File(chatFilePath);
             chatLogFile.createNewFile();
@@ -252,6 +248,50 @@ public class ChatController {
         return ResponseEntity.badRequest().body(null);
     }
 
+    @RequestMapping(
+        path = "clean",
+        method = RequestMethod.DELETE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity clear() throws IOException {
+        FileInputStream fi = new FileInputStream(chatFilePath);
+        ObjectInputStream oi = new ObjectInputStream(fi);
+
+        List<Message> messages = new ArrayList<Message>();
+        boolean cont = true;
+        while (cont) {
+            Message message = null;
+            try {
+                message = (Message) oi.readObject();
+            } catch (Exception ex) {
+                cont = false;
+            }
+            if (message != null) {
+                messages.add(message);
+            } else {
+                cont = false;
+            }
+        }
+
+        File chatLogFile = new File(chatFilePath);
+        chatLogFile.createNewFile();
+        PrintWriter writer = new PrintWriter(chatLogFile);
+        writer.print("");
+        writer.close();
+
+        DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+        FileOutputStream fo = new FileOutputStream(chatFilePath);
+        ObjectOutputStream ou = new ObjectOutputStream(fo);
+        Message message = new Message();
+        message.username = "server";
+        message.message = "Message history was clean!";
+        message.date = df.format(new Date());
+        ou.writeObject(message);
+        ou.close();
+        fo.close();
+
+        return ResponseEntity.ok(messages.size());
+    }
 
     /**
      * curl -X POST -i localhost:8080/chat/say -d "name=I_AM_STUPID&msg=Hello everyone in this chat"
@@ -262,17 +302,12 @@ public class ChatController {
         consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity say(@RequestBody Message message) throws IOException {
         DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-        if (usersOnline.containsKey(message.username)) {
+        if (usersOnline.containsKey(message.username) || admin.username.equals(message.username)) {
             File chatLogFile = new File(chatFilePath);
             chatLogFile.createNewFile();
             FileOutputStream fi = new FileOutputStream(chatFilePath, true);
             AppendingObjectOutputStream oi = new AppendingObjectOutputStream(fi);
             message.date = df.format(new Date());
-            /*Pattern pattern = Pattern.compile("https?://[a-z/0-9.]+");
-            Matcher matcher = pattern.matcher(message.message);
-            while (matcher.find()) {
-                message.message = message.message.replace(message.message.substring(matcher.start(), matcher.end()), "<a href=\"" + message.message.substring(matcher.start(), matcher.end()) + "\">" + message.message.substring(matcher.start(), matcher.end()) + "</a>");
-            }*/
 
             DbMessage dbMessage = new DbMessage();
             dbMessage.setName(message.username);
