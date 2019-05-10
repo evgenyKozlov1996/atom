@@ -1,4 +1,4 @@
 FROM openjdk:8-jre-alpine
-COPY build/libs/web_hackaton-1.0-SNAPSHOT.jar /services/chat.jar
+COPY build/libs/*.jar .
 EXPOSE 8080
-CMD ["java", "-jar", "/services/chat.jar"]
+ENTRYPOINT ["java", "-jar", "/web_hackaton.jar"]
